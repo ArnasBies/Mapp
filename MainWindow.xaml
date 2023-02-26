@@ -8,9 +8,9 @@
         Title="MainWindow" Height="470" Width="800">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="20"/>
-            <RowDefinition Height="150"/>
-            <RowDefinition Height="300"/>
+            <RowDefinition Height="20*"/>
+            <RowDefinition Height="150*"/>
+            <RowDefinition Height="300*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
@@ -21,7 +21,9 @@
 
         <!--The menu selection-->
         <Button Grid.Column="3" Margin="5 0" Content="Play"/>
-        <Button Grid.Column="1" Margin="5 0" Content="Configure"/>
+        
+        <!--Configuration menu: add coordinates (select how many points user is adding, ask coordinate name, and ask for click), reset specific points, clear map-->
+        <Button x:Name="Configure" Grid.Column="1" Margin="5 0" Content="Configure" Click="Configure_Click"/>
         
         <!--Handles configuration switching-->
         <Button x:Name="ShowMaps" Grid.Column="2" Margin="5 0" Content="Show My Maps" Click="ShowMaps_Click"/>
@@ -33,6 +35,7 @@
         <!--Map creation xaml-->
         <Button x:Name="CreateMap" Grid.Column="0" Margin="5 0" Content="Create Map" Click="CreateMap_Click"/>
 
+        <Button x:Name="Cancel" Content="Cancel map creation" Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="0, 80,0,180" Click="Cancel_Click" Visibility="Collapsed"/>
         <Button x:Name="Submit" Content="Submit new map name" Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="0,0,0,240" Visibility="Collapsed" Click="Submit_Click" Height="60" VerticalAlignment="Bottom"/>
         <TextBox x:Name="NameBox" Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" Background="DarkSlateGray" Margin="30" Visibility="Collapsed" Foreground="WhiteSmoke"/>
         
@@ -41,6 +44,6 @@
 
         </Canvas>
         <!--Current configuration label-->
-        <TextBlock x:Name="CurrentSelection" Text="No map is selected" Grid.Row="2" Grid.Column="3" VerticalAlignment="Bottom" Margin="0 20" HorizontalAlignment="Center"/>
+        <TextBlock x:Name="CurrentSelection" Text="No map is selected" Grid.Row="2" Grid.Column="3" VerticalAlignment="Bottom" Margin="0 20 0 40" HorizontalAlignment="Center"/>
     </Grid>
 </Window>

@@ -32,11 +32,13 @@ namespace Mapp
             InitializeConfigurations();
         }
 
+        //Button handlers
         private void CreateMap_Click(object sender, RoutedEventArgs e)
         {
             //throws out a box requiring to enter the name of a new map
             NameBox.Visibility = Visibility.Visible;
             Submit.Visibility = Visibility.Visible;
+            Cancel.Visibility = Visibility.Visible;
 
             //gets image uri from file explorer
             uri = GetImageFromFiles();
@@ -54,6 +56,15 @@ namespace Mapp
 
             NameBox.Visibility = Visibility.Collapsed;
             Submit.Visibility = Visibility.Collapsed;
+            Cancel.Visibility = Visibility.Collapsed;
+            NameBox.Clear();
+        }
+
+        private void Cancel_Click(object sender, RoutedEventArgs e)
+        {
+            NameBox.Visibility = Visibility.Collapsed;
+            Submit.Visibility = Visibility.Collapsed;
+            Cancel.Visibility = Visibility.Collapsed;
             NameBox.Clear();
         }
 
@@ -89,6 +100,7 @@ namespace Mapp
             ShowMaps.Visibility = Visibility.Visible;
         }
 
+        //Misc functions
         private void InitializeConfigurations()
         {
             //gets all of the maps by the names of the directories of the configurations
@@ -119,6 +131,11 @@ namespace Mapp
                 return new Uri(dlg.FileName);
             }
             return null;
+        }
+
+        private void Configure_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }
