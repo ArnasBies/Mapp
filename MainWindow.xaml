@@ -8,8 +8,8 @@
         Title="MainWindow" Height="470" Width="800">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="20*"/>
-            <RowDefinition Height="150*"/>
+            <RowDefinition Height="25*"/>
+            <RowDefinition Height="145*"/>
             <RowDefinition Height="300*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -20,17 +20,22 @@
         </Grid.ColumnDefinitions>
 
         <!--The menu selection-->
-        <Button Grid.Column="3" Margin="5 0" Content="Play"/>
+        <Button x:Name="Play" Grid.Column="3" Margin="5 0" Content="Play"/>
         
         <!--Configuration menu: add coordinates (select how many points user is adding, ask coordinate name, and ask for click), reset specific points, clear map-->
         <Button x:Name="Configure" Grid.Column="1" Margin="5 0" Content="Configure" Click="Configure_Click"/>
-        
+
+        <Button x:Name="AddPoint" Grid.Column="1" Margin="5 0" Content="Add Object" Visibility="Collapsed"/>
+        <Button x:Name="RemovePoint" Grid.Column="2" Margin="5 0" Content="Remove Object" Visibility="Collapsed"/>
+        <Button x:Name="ShowPoints" Grid.Column="3" Margin="5 0" Content="Show Objects" Visibility="Collapsed"/>
+
+        <Button x:Name="ExitConfig" Content="Exit Configuration" Margin="5 0" Visibility="Collapsed" Click="ExitConfig_Click"/>
         <!--Handles configuration switching-->
         <Button x:Name="ShowMaps" Grid.Column="2" Margin="5 0" Content="Show My Maps" Click="ShowMaps_Click"/>
         <ScrollViewer x:Name="CurrentMaps"  Grid.RowSpan="2" Grid.Row="1" Grid.Column="2" Margin="0 40" Visibility="Collapsed">
             <ListBox x:Name="CurrentMapsListBox" Background="DarkSlateGray" Foreground="WhiteSmoke"/>
         </ScrollViewer>
-        <Button x:Name="SelectMap" Grid.Column="2" Grid.Row="1" Margin="5 10 5 120" Content="Pick Selected Map" Visibility="Collapsed" Click="SelectMap_Click"/>
+        <Button x:Name="SelectMap" Grid.Column="2" Grid.Row="1" Margin="5 10 5 100" Content="Pick Selected Map" Visibility="Visible" Click="SelectMap_Click"/>
 
         <!--Map creation xaml-->
         <Button x:Name="CreateMap" Grid.Column="0" Margin="5 0" Content="Create Map" Click="CreateMap_Click"/>

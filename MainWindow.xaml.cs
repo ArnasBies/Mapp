@@ -23,6 +23,8 @@ namespace Mapp
     /// </summary>
     public partial class MainWindow : Window
     {
+        private Configuration currentConfig;
+        private List<Configuration>? configurations = new List<Configuration>();
         private string? newConfig;
         private Uri? uri;
 
@@ -49,7 +51,7 @@ namespace Mapp
             //retrieves new map name from textbox and also gets copies map image to configurations folder
             newConfig = NameBox.Text;
 
-            Globals.configurations.Add(new Configuration(uri, newConfig));
+            configurations.Add(new Configuration(uri, newConfig));
             
             Directory.CreateDirectory(Environment.CurrentDirectory + "/configurations/" + newConfig);
             File.Copy(uri.AbsolutePath, $"{Environment.CurrentDirectory}/configurations/{newConfig}/{newConfig}{uri.AbsolutePath.Substring(uri.AbsolutePath.LastIndexOf("."))}");
@@ -74,7 +76,7 @@ namespace Mapp
             ShowMaps.Visibility = Visibility.Collapsed;
             SelectMap.Visibility = Visibility.Visible;
             CurrentMaps.Visibility = Visibility.Visible;
-            foreach (Configuration config in Globals.configurations)
+            foreach (Configuration config in configurations)
             {
                 CurrentMapsListBox.Items.Add(config.MapName);
             }
@@ -87,11 +89,12 @@ namespace Mapp
             SelectMap.Visibility = Visibility.Collapsed;
             CurrentMaps.Visibility = Visibility.Collapsed;
 
-            foreach(Configuration config in Globals.configurations)
+            foreach(Configuration config in configurations)
             {
-                if(config.MapName == CurrentMapsListBox.SelectedItem)
+                if(config.MapName == CurrentMapsListBox.SelectedItem && CurrentMapsListBox.SelectedItem != null)
                 {
                     CurrentSelection.Text = $"Map Selected: {config.MapName}";
+                    currentConfig = config;
                     config.SetConfiguration();
                 }
             }
@@ -100,7 +103,43 @@ namespace Mapp
             ShowMaps.Visibility = Visibility.Visible;
         }
 
+        private void Configure_Click(object sender, RoutedEventArgs e)
+        {
+            EnterConfigMenu();
+        }
+
+        private void ExitConfig_Click(object sender, RoutedEventArgs e)
+        {
+            ExitConfigMenu();
+        }
+
         //Misc functions
+        private void EnterConfigMenu()
+        {
+            Play.Visibility = Visibility.Collapsed;
+            CreateMap.Visibility = Visibility.Collapsed;
+            ShowMaps.Visibility = Visibility.Collapsed;
+            Configure.Visibility = Visibility.Collapsed;
+
+            RemovePoint.Visibility = Visibility.Visible;
+            AddPoint.Visibility = Visibility.Visible;
+            ExitConfig.Visibility = Visibility.Visible;
+            ShowPoints.Visibility = Visibility.Visible;
+        }
+
+        private void ExitConfigMenu()
+        {
+            Play.Visibility = Visibility.Visible;
+            CreateMap.Visibility = Visibility.Visible;
+            ShowMaps.Visibility = Visibility.Visible;
+            Configure.Visibility = Visibility.Visible;
+
+            ShowPoints.Visibility = Visibility.Collapsed;
+            RemovePoint.Visibility = Visibility.Collapsed;
+            AddPoint.Visibility = Visibility.Collapsed;
+            ExitConfig.Visibility = Visibility.Collapsed;
+        }
+
         private void InitializeConfigurations()
         {
             //gets all of the maps by the names of the directories of the configurations
@@ -131,11 +170,6 @@ namespace Mapp
                 return new Uri(dlg.FileName);
             }
             return null;
-        }
-
-        private void Configure_Click(object sender, RoutedEventArgs e)
-        {
-
         }
     }
 }
