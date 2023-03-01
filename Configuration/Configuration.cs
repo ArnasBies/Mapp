@@ -32,8 +32,9 @@ namespace Mapp
             MapObjects?.Add(p);
         }
 
-        public void SetConfiguration()
+        public BitmapImage GetConfigBackground()
         {
+            return background;
         }
     }
 }

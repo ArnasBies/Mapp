@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.DirectoryServices.ActiveDirectory;
 using System.IO;
 using System.Linq;
 using System.Printing;
@@ -95,7 +96,7 @@ namespace Mapp
                 {
                     CurrentSelection.Text = $"Map Selected: {config.MapName}";
                     currentConfig = config;
-                    config.SetConfiguration();
+                    MapBackround.Source = config.GetConfigBackground();
                 }
             }
 
@@ -143,17 +144,35 @@ namespace Mapp
         private void InitializeConfigurations()
         {
             //gets all of the maps by the names of the directories of the configurations
+
+            int failedAttempts;
+
             foreach(string configPath in Directory.GetDirectories($"{Environment.CurrentDirectory}/configurations/"))
             {
                 string configName = configPath.Split(System.IO.Path.DirectorySeparatorChar).Last().Split("/").Last();
+                failedAttempts = 0;
                 try
                 {
-                    Globals.configurations.Add(new Configuration(new Uri($"{configPath}/{configName}.png"), configName));
+                    configurations.Add(new Configuration(new Uri($"{configPath}/{configName}.png"), configName));
                 }
                 catch
                 {
-                    Globals.configurations.Add(new Configuration(new Uri($"{configPath}/{configName}.jpg"), configName));
+                    failedAttempts++;
                 }
+                try
+                {
+                    configurations.Add(new Configuration(new Uri($"{configPath}/{configName}.jpg"), configName));
+                }
+                catch
+                {
+                    failedAttempts++;
+                }
+
+                if(failedAttempts == 2)
+                {
+                    Directory.Delete(configPath);
+                }
+
             }
         }
 

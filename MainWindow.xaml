@@ -19,6 +19,11 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
+        <!--The map part of the application-->
+        <Canvas x:Name="BackgroundArea" Grid.RowSpan="2" Grid.Row="1" Grid.ColumnSpan="4">
+            <Image x:Name="MapBackround" ClipToBounds="True" Height="{Binding Path=ActualHeight, ElementName=BackgroundArea}" Width="{Binding Path=ActualWidth, ElementName=BackgroundArea}" Stretch="Uniform"/>
+        </Canvas>
+
         <!--The menu selection-->
         <Button x:Name="Play" Grid.Column="3" Margin="5 0" Content="Play"/>
         
@@ -35,19 +40,15 @@
         <ScrollViewer x:Name="CurrentMaps"  Grid.RowSpan="2" Grid.Row="1" Grid.Column="2" Margin="0 40" Visibility="Collapsed">
             <ListBox x:Name="CurrentMapsListBox" Background="DarkSlateGray" Foreground="WhiteSmoke"/>
         </ScrollViewer>
-        <Button x:Name="SelectMap" Grid.Column="2" Grid.Row="1" Margin="5 10 5 100" Content="Pick Selected Map" Visibility="Visible" Click="SelectMap_Click"/>
+        <Button x:Name="SelectMap" Grid.Column="2" Grid.Row="1" Margin="5 5" Content="Pick Selected Map" Visibility="Collapsed" Height="30" VerticalAlignment="Top" Click="SelectMap_Click"/>
 
         <!--Map creation xaml-->
         <Button x:Name="CreateMap" Grid.Column="0" Margin="5 0" Content="Create Map" Click="CreateMap_Click"/>
 
-        <Button x:Name="Cancel" Content="Cancel map creation" Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="0, 80,0,180" Click="Cancel_Click" Visibility="Collapsed"/>
-        <Button x:Name="Submit" Content="Submit new map name" Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="0,0,0,240" Visibility="Collapsed" Click="Submit_Click" Height="60" VerticalAlignment="Bottom"/>
+        <Button x:Name="Cancel" Content="Cancel map creation" Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="0, 90,0,120" Click="Cancel_Click" Visibility="Collapsed" VerticalAlignment="Top" Height="60"/>
+        <Button x:Name="Submit" Content="Submit new map name" Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="0,0,0,200" Visibility="Collapsed" Click="Submit_Click" Height="60" VerticalAlignment="Top"/>
         <TextBox x:Name="NameBox" Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" Background="DarkSlateGray" Margin="30" Visibility="Collapsed" Foreground="WhiteSmoke"/>
         
-        <!--The map part of the application-->
-        <Canvas x:Name="BackgroundArea" Grid.RowSpan="2" Grid.Row="1" Grid.ColumnSpan="4">
-
-        </Canvas>
         <!--Current configuration label-->
         <TextBlock x:Name="CurrentSelection" Text="No map is selected" Grid.Row="2" Grid.Column="3" VerticalAlignment="Bottom" Margin="0 20 0 40" HorizontalAlignment="Center"/>
     </Grid>
