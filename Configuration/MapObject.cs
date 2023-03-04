@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace Mapp
 {
-    internal class Point
+    internal class MapObject
     {
-        public readonly float x, y;
+        public readonly double x, y;
         public readonly string ObjectName;
 
-        public Point(int X, int Y, string objectName)
+        public MapObject(double X, double Y, string objectName)
         {
             x = X;
             y = Y;

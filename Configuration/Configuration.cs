@@ -14,7 +14,8 @@ namespace Mapp
         //members
         //private string backgroundPath;
         private BitmapImage background;
-        private List<Point>? MapObjects;
+
+        public List<MapObject>? MapObjects { get; private set; }
 
         public readonly string MapName;
 
@@ -27,7 +28,7 @@ namespace Mapp
         }
 
         //functions
-        public void addObjectToMap(Point p)
+        public void AddObjectToMap(MapObject p)
         {
             MapObjects?.Add(p);
         }

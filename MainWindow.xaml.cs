@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.DirectoryServices.ActiveDirectory;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Printing;
@@ -24,15 +25,24 @@ namespace Mapp
     /// </summary>
     public partial class MainWindow : Window
     {
-        private Configuration currentConfig;
-        private List<Configuration>? configurations = new List<Configuration>();
-        private string? newConfig;
+        private Configuration? currentConfig;
+        private List<Configuration>? configurations;
         private Uri? uri;
+        private bool inAddingMode;
+
+        private string? newConfig;
+        private string? tempObjectName;
 
         public MainWindow()
         {
+            configurations = new List<Configuration>();
+            inAddingMode = false;
+
             InitializeComponent();
             InitializeConfigurations();
+            RetrieveMapObjects();
+
+            BackgroundArea.MouseLeftButtonDown += OnCanvasClick;
         }
 
         //Button handlers
@@ -56,6 +66,7 @@ namespace Mapp
             
             Directory.CreateDirectory(Environment.CurrentDirectory + "/configurations/" + newConfig);
             File.Copy(uri.AbsolutePath, $"{Environment.CurrentDirectory}/configurations/{newConfig}/{newConfig}{uri.AbsolutePath.Substring(uri.AbsolutePath.LastIndexOf("."))}");
+            File.Create($"{Environment.CurrentDirectory}/configurations/{newConfig}/{newConfig}.txt");
 
             NameBox.Visibility = Visibility.Collapsed;
             Submit.Visibility = Visibility.Collapsed;
@@ -77,6 +88,7 @@ namespace Mapp
             ShowMaps.Visibility = Visibility.Collapsed;
             SelectMap.Visibility = Visibility.Visible;
             CurrentMaps.Visibility = Visibility.Visible;
+
             foreach (Configuration config in configurations)
             {
                 CurrentMapsListBox.Items.Add(config.MapName);
@@ -90,14 +102,22 @@ namespace Mapp
             SelectMap.Visibility = Visibility.Collapsed;
             CurrentMaps.Visibility = Visibility.Collapsed;
 
-            foreach(Configuration config in configurations)
+            if (configurations != null)
             {
-                if(config.MapName == CurrentMapsListBox.SelectedItem && CurrentMapsListBox.SelectedItem != null)
+                foreach (Configuration config in configurations)
                 {
-                    CurrentSelection.Text = $"Map Selected: {config.MapName}";
-                    currentConfig = config;
-                    MapBackround.Source = config.GetConfigBackground();
+                    if (config.MapName == CurrentMapsListBox.SelectedItem && CurrentMapsListBox.SelectedItem != null)
+                    {
+                        CurrentSelection.Text = $"Map Selected: {config.MapName}";
+                        currentConfig = config;
+                        MapBackround.Source = config.GetConfigBackground();
+                    }
                 }
+            }
+
+            if(CurrentMapsListBox.SelectedItems.Count > 0)
+            {
+                Configure.Visibility = Visibility.Visible;
             }
 
             CurrentMapsListBox.Items.Clear();
@@ -112,6 +132,81 @@ namespace Mapp
         private void ExitConfig_Click(object sender, RoutedEventArgs e)
         {
             ExitConfigMenu();
+        }
+
+        private void ShowPoints_Click(object sender, RoutedEventArgs e)
+        {
+            //Shows needed UI and adds shows map objects
+            ShowPoints.Visibility = Visibility.Collapsed;
+            CurrentPoints.Visibility = Visibility.Visible;
+            Hide.Visibility = Visibility.Visible;
+
+            if (currentConfig != null)
+            {
+                foreach (MapObject p in currentConfig.MapObjects)
+                {
+                    CurrentPointsListBox.Items.Add(p.ObjectName);
+                }
+            }
+        }
+
+        private void Hide_Click(object sender, RoutedEventArgs e)
+        {
+            //just resets the point box and hides it
+            CurrentPointsListBox.Items.Clear();
+            ShowPoints.Visibility = Visibility.Visible;
+            Hide.Visibility = Visibility.Collapsed;
+            CurrentPoints.Visibility = Visibility.Collapsed;
+        }
+
+        private void AddPoint_Click(object sender, RoutedEventArgs e)
+        {
+            MapObjectName.Visibility = Visibility.Visible;
+            AddPoint.Visibility = Visibility.Collapsed;
+            SubmitObject.Visibility = Visibility.Visible;
+
+            ToolTip.Text = "Enter the name of your object into the textbox";
+        }
+
+        private void SubmitObject_Click(object sender, RoutedEventArgs e)
+        {
+            tempObjectName = MapObjectName.Text;
+
+            MapObjectName.Visibility = Visibility.Collapsed;
+            SubmitObject.Visibility = Visibility.Collapsed;
+            MapObjectName.Clear();
+
+            ToolTip.Text = "Click on your object on the map";
+            inAddingMode = true;
+        }
+
+        private void OnCanvasClick(object sender, MouseEventArgs e)
+        {
+            if(inAddingMode)
+            {
+                Point p = Mouse.GetPosition(BackgroundArea);
+
+                if (configurations != null)
+                {
+                    for(int i = 0; i < configurations.Count; i++)
+                    {
+                        if (currentConfig.MapName == configurations[i].MapName)
+                        {
+                            configurations[i].AddObjectToMap(new MapObject(p.X, p.Y, tempObjectName));
+                            currentConfig = configurations[i];
+                        }
+                    }
+                }
+
+                using (StreamWriter sw = new($"{Environment.CurrentDirectory}/configurations/{currentConfig.MapName}/{currentConfig.MapName}.txt", append: true))
+                {
+                    sw.WriteLine($"{p.X} {p.Y} {tempObjectName}");
+                }
+
+                AddPoint.Visibility = Visibility.Visible;
+                ToolTip.Text = "";
+                inAddingMode = false;
+            }
         }
 
         //Misc functions
@@ -173,6 +268,36 @@ namespace Mapp
                     Directory.Delete(configPath);
                 }
 
+            }
+        }
+
+        private void RetrieveMapObjects()
+        {
+            double x, y;
+            string? name;
+            string[] currentConfig = new string[3];
+            string? line;
+
+            if (configurations == null) return;
+            //retrieves each map's map objects and adds them to the maps
+            for(int i = 0; i < configurations.Count; i++)
+            {
+                using (StreamReader sr = new($"{Environment.CurrentDirectory}/configurations/{configurations[i].MapName}/{configurations[i].MapName}.txt"))
+                {
+                    while (sr.Peek != null)
+                    {
+                        line = sr.ReadLine();
+                        if (string.IsNullOrEmpty(line)) break;
+
+                        currentConfig = line.Split(" ");
+
+                        x = double.Parse(currentConfig[0]);
+                        y = double.Parse(currentConfig[1]);
+                        name = currentConfig[2];
+
+                        configurations[i].AddObjectToMap(new MapObject(x, y, name));
+                    }
+                }
             }
         }
 
