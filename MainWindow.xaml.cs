@@ -118,6 +118,7 @@ namespace Mapp
             if(CurrentMapsListBox.SelectedItems.Count > 0)
             {
                 Configure.Visibility = Visibility.Visible;
+                Play.Visibility = Visibility.Visible;
             }
 
             CurrentMapsListBox.Items.Clear();
@@ -165,7 +166,7 @@ namespace Mapp
             AddPoint.Visibility = Visibility.Collapsed;
             SubmitObject.Visibility = Visibility.Visible;
 
-            ToolTip.Text = "Enter the name of your object into the textbox";
+            ToolTip.Text = "Enter the name of your \nobject into the textbox";
         }
 
         private void SubmitObject_Click(object sender, RoutedEventArgs e)
@@ -180,6 +181,51 @@ namespace Mapp
             inAddingMode = true;
         }
 
+        private void RemoveObject_Click(object sender, RoutedEventArgs e)
+        {
+            if (String.IsNullOrEmpty(CurrentPointsListBox.SelectedItem.ToString())) return;
+
+            string[] allLines = File.ReadAllLines($"{Environment.CurrentDirectory}/configurations/{currentConfig.MapName}/{currentConfig.MapName}.txt");
+
+            if(allLines.Length == 1 || allLines == null || allLines.Length == 0)
+            {
+                File.WriteAllText($"{Environment.CurrentDirectory}/configurations/{currentConfig.MapName}/{currentConfig.MapName}.txt", "");
+
+                currentConfig.MapObjects.Clear();
+                for (int i = 0; i < configurations.Count; i++) if (configurations[i].MapName == currentConfig.MapName)  configurations[i].MapObjects.Clear();
+                ResetObjectBox();
+                return;
+            }
+
+            string[] changedLines = new string[allLines.Length - 1];
+            int changedArrIndex = 0;
+            string fullLineName;
+
+            foreach (string line in allLines)
+            {
+                fullLineName = "";
+
+                if(String.IsNullOrEmpty(line)) continue;
+                string[] lineArr = line.Split(" ");
+
+                for (int i = 2; i < lineArr.Length; i++) fullLineName += lineArr[i] + " ";
+                
+                if(fullLineName.Replace(" ", "") != CurrentPointsListBox.SelectedItem.ToString().Replace(" ", ""))
+                {
+                    changedLines[changedArrIndex] = line;
+                    changedArrIndex++;
+                }
+            }
+
+            File.WriteAllLines($"{Environment.CurrentDirectory}/configurations/{currentConfig.MapName}/{currentConfig.MapName}.txt", changedLines);
+
+            RetrieveMapObjects();
+
+            for(int i = 0; i < configurations.Count; i++) if (configurations[i].MapName == currentConfig.MapName) currentConfig = configurations[i];
+
+            ResetObjectBox();
+        }
+
         private void OnCanvasClick(object sender, MouseEventArgs e)
         {
             if(inAddingMode)
@@ -192,7 +238,7 @@ namespace Mapp
                     {
                         if (currentConfig.MapName == configurations[i].MapName)
                         {
-                            configurations[i].AddObjectToMap(new MapObject(p.X, p.Y, tempObjectName));
+                            configurations[i].AddObjectToMap(new MapObject(p.X / BackgroundArea.ActualWidth, p.Y / ActualHeight, tempObjectName));
                             currentConfig = configurations[i];
                         }
                     }
@@ -200,16 +246,27 @@ namespace Mapp
 
                 using (StreamWriter sw = new($"{Environment.CurrentDirectory}/configurations/{currentConfig.MapName}/{currentConfig.MapName}.txt", append: true))
                 {
-                    sw.WriteLine($"{p.X} {p.Y} {tempObjectName}");
+                    sw.WriteLine($"{p.X / BackgroundArea.ActualWidth} {p.Y / BackgroundArea.ActualHeight} {tempObjectName}");
                 }
 
                 AddPoint.Visibility = Visibility.Visible;
                 ToolTip.Text = "";
+                ResetObjectBox();
                 inAddingMode = false;
             }
         }
 
         //Misc functions
+        private void ResetObjectBox()
+        {
+            CurrentPointsListBox.Items.Clear();
+
+            foreach (MapObject p in currentConfig.MapObjects)
+            {
+                CurrentPointsListBox.Items.Add(p.ObjectName);
+            }
+        }
+
         private void EnterConfigMenu()
         {
             Play.Visibility = Visibility.Collapsed;
@@ -217,7 +274,7 @@ namespace Mapp
             ShowMaps.Visibility = Visibility.Collapsed;
             Configure.Visibility = Visibility.Collapsed;
 
-            RemovePoint.Visibility = Visibility.Visible;
+            RemoveObject.Visibility = Visibility.Visible;
             AddPoint.Visibility = Visibility.Visible;
             ExitConfig.Visibility = Visibility.Visible;
             ShowPoints.Visibility = Visibility.Visible;
@@ -231,7 +288,7 @@ namespace Mapp
             Configure.Visibility = Visibility.Visible;
 
             ShowPoints.Visibility = Visibility.Collapsed;
-            RemovePoint.Visibility = Visibility.Collapsed;
+            RemoveObject.Visibility = Visibility.Collapsed;
             AddPoint.Visibility = Visibility.Collapsed;
             ExitConfig.Visibility = Visibility.Collapsed;
         }
@@ -275,13 +332,13 @@ namespace Mapp
         {
             double x, y;
             string? name;
-            string[] currentConfig = new string[3];
             string? line;
 
             if (configurations == null) return;
             //retrieves each map's map objects and adds them to the maps
             for(int i = 0; i < configurations.Count; i++)
             {
+                configurations[i].MapObjects.Clear();
                 using (StreamReader sr = new($"{Environment.CurrentDirectory}/configurations/{configurations[i].MapName}/{configurations[i].MapName}.txt"))
                 {
                     while (sr.Peek != null)
@@ -289,11 +346,13 @@ namespace Mapp
                         line = sr.ReadLine();
                         if (string.IsNullOrEmpty(line)) break;
 
-                        currentConfig = line.Split(" ");
+                        string[] currentConfig = line.Split(" ");
 
                         x = double.Parse(currentConfig[0]);
                         y = double.Parse(currentConfig[1]);
-                        name = currentConfig[2];
+                        name = "";
+
+                        for (int j = 2; j < currentConfig.Length; j++) name += currentConfig[j] + " ";
 
                         configurations[i].AddObjectToMap(new MapObject(x, y, name));
                     }
