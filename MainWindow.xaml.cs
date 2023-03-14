@@ -17,6 +17,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Threading;
 
 namespace Mapp
 {
@@ -26,26 +27,59 @@ namespace Mapp
     public partial class MainWindow : Window
     {
         private Configuration? currentConfig;
-        private List<Configuration>? configurations;
+        private Random random;
+        private List<Configuration> configurations;
+        private List<MapObject> playModeObjects;
+        private MapObject currentPlayObject;
         private Uri? uri;
-        private bool inAddingMode;
+        private int score;
+        private bool inAddingMode, inConfigMode, inPlayMode;
+
 
         private string? newConfig;
         private string? tempObjectName;
 
         public MainWindow()
         {
+            playModeObjects = new List<MapObject>();
             configurations = new List<Configuration>();
+            random = new Random();
             inAddingMode = false;
+            inConfigMode = false;
+            inPlayMode = false;
+            score = 0;
 
             InitializeComponent();
             InitializeConfigurations();
             RetrieveMapObjects();
 
+            CurrentPointsListBox.SelectionChanged += SelectedObject;
             BackgroundArea.MouseLeftButtonDown += OnCanvasClick;
         }
 
         //Button handlers
+
+        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (currentConfig == null || currentConfig.MapObjects == null)
+            {
+                ObjectHighlight.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            if(ObjectHighlight.Visibility == Visibility.Visible)
+            {
+                for (int i = 0; i < currentConfig.MapObjects.Count; i++)
+                {
+                    if (currentConfig.MapObjects[i].ObjectName == CurrentPointsListBox.SelectedItem.ToString())
+                    {
+                        Canvas.SetTop(ObjectHighlight, currentConfig.MapObjects[i].y * BackgroundArea.ActualHeight - ObjectHighlight.Height / 2);
+                        Canvas.SetLeft(ObjectHighlight, currentConfig.MapObjects[i].x * BackgroundArea.ActualWidth - ObjectHighlight.Width / 2);
+                    }
+                }
+            }    
+        }
+
         private void CreateMap_Click(object sender, RoutedEventArgs e)
         {
             //throws out a box requiring to enter the name of a new map
@@ -61,6 +95,8 @@ namespace Mapp
         {
             //retrieves new map name from textbox and also gets copies map image to configurations folder
             newConfig = NameBox.Text;
+
+            if (uri == null) return;
 
             configurations.Add(new Configuration(uri, newConfig));
             
@@ -89,6 +125,8 @@ namespace Mapp
             SelectMap.Visibility = Visibility.Visible;
             CurrentMaps.Visibility = Visibility.Visible;
 
+            if (configurations == null) return;
+
             foreach (Configuration config in configurations)
             {
                 CurrentMapsListBox.Items.Add(config.MapName);
@@ -102,11 +140,24 @@ namespace Mapp
             SelectMap.Visibility = Visibility.Collapsed;
             CurrentMaps.Visibility = Visibility.Collapsed;
 
+            if (CurrentMapsListBox.SelectedItem == null)
+            {
+                if (CurrentMapsListBox.SelectedItems.Count > 0)
+                {
+                    Configure.Visibility = Visibility.Visible;
+                    Play.Visibility = Visibility.Visible;
+                }
+
+                CurrentMapsListBox.Items.Clear();
+                ShowMaps.Visibility = Visibility.Visible;
+                return;
+            }
+
             if (configurations != null)
             {
                 foreach (Configuration config in configurations)
                 {
-                    if (config.MapName == CurrentMapsListBox.SelectedItem && CurrentMapsListBox.SelectedItem != null)
+                    if (config.MapName == CurrentMapsListBox.SelectedItem.ToString())
                     {
                         CurrentSelection.Text = $"Map Selected: {config.MapName}";
                         currentConfig = config;
@@ -132,6 +183,7 @@ namespace Mapp
 
         private void ExitConfig_Click(object sender, RoutedEventArgs e)
         {
+            ObjectHighlight.Visibility = Visibility.Collapsed;
             ExitConfigMenu();
         }
 
@@ -142,12 +194,11 @@ namespace Mapp
             CurrentPoints.Visibility = Visibility.Visible;
             Hide.Visibility = Visibility.Visible;
 
-            if (currentConfig != null)
+            if (currentConfig == null||currentConfig.MapObjects == null) return;
+
+            foreach (MapObject p in currentConfig.MapObjects)
             {
-                foreach (MapObject p in currentConfig.MapObjects)
-                {
-                    CurrentPointsListBox.Items.Add(p.ObjectName);
-                }
+                CurrentPointsListBox.Items.Add(p.ObjectName);
             }
         }
 
@@ -162,6 +213,7 @@ namespace Mapp
 
         private void AddPoint_Click(object sender, RoutedEventArgs e)
         {
+            ObjectHighlight.Visibility = Visibility.Collapsed;
             MapObjectName.Visibility = Visibility.Visible;
             AddPoint.Visibility = Visibility.Collapsed;
             SubmitObject.Visibility = Visibility.Visible;
@@ -183,6 +235,7 @@ namespace Mapp
 
         private void RemoveObject_Click(object sender, RoutedEventArgs e)
         {
+            if (currentConfig == null || currentConfig.MapObjects == null || configurations == null || CurrentPointsListBox.SelectedItem == null) return;
             if (String.IsNullOrEmpty(CurrentPointsListBox.SelectedItem.ToString())) return;
 
             string[] allLines = File.ReadAllLines($"{Environment.CurrentDirectory}/configurations/{currentConfig.MapName}/{currentConfig.MapName}.txt");
@@ -226,6 +279,39 @@ namespace Mapp
             ResetObjectBox();
         }
 
+        private void Play_Click(object sender, RoutedEventArgs e)
+        {
+            if (currentConfig == null || currentConfig.MapObjects == null || currentConfig.MapObjects.Count == 0) return;
+            EnterPlayMode();
+            inPlayMode = true;
+
+            playModeObjects.AddRange(currentConfig.MapObjects);
+            currentPlayObject = playModeObjects[random.Next(0, playModeObjects.Count)];
+
+            HighlightObject(currentPlayObject);
+        }
+
+        private void GuessButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (String.IsNullOrEmpty(GuessBox.Text.ToString())) return;
+
+            if (GuessBox.Text.ToString() == currentPlayObject.ObjectName.TrimEnd()) score++;
+
+            playModeObjects.Remove(currentPlayObject);
+
+            if(playModeObjects.Count == 0)
+            {
+                ExitPlayMode();
+                return;
+            }
+
+            currentPlayObject = playModeObjects[random.Next(0, playModeObjects.Count)];
+
+            HighlightObject(currentPlayObject);
+            GuessBox.Clear();
+            GuessBox.Focus();
+        }
+
         private void OnCanvasClick(object sender, MouseEventArgs e)
         {
             if(inAddingMode)
@@ -238,7 +324,7 @@ namespace Mapp
                     {
                         if (currentConfig.MapName == configurations[i].MapName)
                         {
-                            configurations[i].AddObjectToMap(new MapObject(p.X / BackgroundArea.ActualWidth, p.Y / ActualHeight, tempObjectName));
+                            configurations[i].AddObjectToMap(new MapObject(p.X / BackgroundArea.ActualWidth, p.Y / BackgroundArea.ActualHeight, tempObjectName));
                             currentConfig = configurations[i];
                         }
                     }
@@ -249,14 +335,70 @@ namespace Mapp
                     sw.WriteLine($"{p.X / BackgroundArea.ActualWidth} {p.Y / BackgroundArea.ActualHeight} {tempObjectName}");
                 }
 
+                ResetObjectBox();
+
                 AddPoint.Visibility = Visibility.Visible;
                 ToolTip.Text = "";
-                ResetObjectBox();
                 inAddingMode = false;
             }
         }
 
+        private void SelectedObject(object sender, SelectionChangedEventArgs e)
+        {
+            if(CurrentPointsListBox.SelectedItem == null) return;
+
+            if (inConfigMode)
+            {
+                for (int i = 0; i < currentConfig.MapObjects.Count; i++)
+                {
+                    if (currentConfig.MapObjects[i].ObjectName == CurrentPointsListBox.SelectedItem.ToString())
+                    {
+                        Canvas.SetTop(ObjectHighlight, currentConfig.MapObjects[i].y * BackgroundArea.ActualHeight - ObjectHighlight.Height/2);
+                        Canvas.SetLeft(ObjectHighlight, currentConfig.MapObjects[i].x * BackgroundArea.ActualWidth - ObjectHighlight.Width/2);
+                        ObjectHighlight.Visibility = Visibility.Visible;
+                    }
+                }
+            }
+        }
+
         //Misc functions
+        private void EnterPlayMode()
+        {
+            Configure.Visibility = Visibility.Collapsed;
+            Play.Visibility = Visibility.Collapsed;
+            CreateMap.Visibility = Visibility.Collapsed;
+            ShowMaps.Visibility = Visibility.Collapsed;
+            SelectMap.Visibility = Visibility.Collapsed;
+            CurrentMaps.Visibility = Visibility.Collapsed;
+
+
+            ObjectHighlight.Visibility = Visibility.Visible;
+            GuessBox.Visibility = Visibility.Visible;
+            GuessButton.Visibility = Visibility.Visible;
+        }
+
+        private void HighlightObject(MapObject mapObject)
+        {
+            Canvas.SetTop(ObjectHighlight, mapObject.y * BackgroundArea.ActualHeight - ObjectHighlight.Height / 2);
+            Canvas.SetLeft(ObjectHighlight, mapObject.x * BackgroundArea.ActualWidth - ObjectHighlight.Width / 2);
+        }
+
+        private void ExitPlayMode()
+        {
+            inPlayMode = false;
+            Configure.Visibility = Visibility.Visible;
+            Play.Visibility = Visibility.Visible;
+            CreateMap.Visibility = Visibility.Visible;
+            ShowMaps.Visibility = Visibility.Visible;
+            ObjectHighlight.Visibility = Visibility.Collapsed;
+
+            ToolTip.Text = $"Your Score: {score}/{currentConfig.MapObjects.Count}";
+
+            GuessBox.Visibility = Visibility.Collapsed;
+            GuessButton.Visibility = Visibility.Collapsed;
+            score = 0;
+        }
+
         private void ResetObjectBox()
         {
             CurrentPointsListBox.Items.Clear();
@@ -269,6 +411,7 @@ namespace Mapp
 
         private void EnterConfigMenu()
         {
+            inConfigMode = true;
             Play.Visibility = Visibility.Collapsed;
             CreateMap.Visibility = Visibility.Collapsed;
             ShowMaps.Visibility = Visibility.Collapsed;
@@ -282,11 +425,14 @@ namespace Mapp
 
         private void ExitConfigMenu()
         {
+            inConfigMode = false;
             Play.Visibility = Visibility.Visible;
             CreateMap.Visibility = Visibility.Visible;
             ShowMaps.Visibility = Visibility.Visible;
             Configure.Visibility = Visibility.Visible;
 
+            CurrentPoints.Visibility = Visibility.Collapsed;
+            Hide.Visibility = Visibility.Collapsed;
             ShowPoints.Visibility = Visibility.Collapsed;
             RemoveObject.Visibility = Visibility.Collapsed;
             AddPoint.Visibility = Visibility.Collapsed;
@@ -296,7 +442,8 @@ namespace Mapp
         private void InitializeConfigurations()
         {
             //gets all of the maps by the names of the directories of the configurations
-
+            CurrentMapsListBox.Items.Clear();
+            configurations.Clear();
             int failedAttempts;
 
             foreach(string configPath in Directory.GetDirectories($"{Environment.CurrentDirectory}/configurations/"))
@@ -346,13 +493,13 @@ namespace Mapp
                         line = sr.ReadLine();
                         if (string.IsNullOrEmpty(line)) break;
 
-                        string[] currentConfig = line.Split(" ");
+                        string[] currentConfigLine = line.Split(" ");
 
-                        x = double.Parse(currentConfig[0]);
-                        y = double.Parse(currentConfig[1]);
+                        x = double.Parse(currentConfigLine[0]);
+                        y = double.Parse(currentConfigLine[1]);
                         name = "";
 
-                        for (int j = 2; j < currentConfig.Length; j++) name += currentConfig[j] + " ";
+                        for (int j = 2; j < currentConfigLine.Length; j++) name += currentConfigLine[j] + " ";
 
                         configurations[i].AddObjectToMap(new MapObject(x, y, name));
                     }

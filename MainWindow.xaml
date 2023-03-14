@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Mapp"
         mc:Ignorable="d"
+        SizeChanged="Window_SizeChanged"
         Title="MainWindow" Height="470" Width="800">
     <Grid>
         <Grid.RowDefinitions>
@@ -22,12 +23,15 @@
         <!--The map part of the application-->
         <Canvas x:Name="BackgroundArea" Grid.RowSpan="2" Grid.Row="1" Grid.ColumnSpan="4">
             <Image x:Name="MapBackround" ClipToBounds="True" Height="{Binding Path=ActualHeight, ElementName=BackgroundArea}" Width="{Binding Path=ActualWidth, ElementName=BackgroundArea}" Stretch="Uniform"/>
+            <Ellipse x:Name="ObjectHighlight" Stroke="Black" Width="20" Height="20" StrokeThickness="2" Fill="Cyan" Opacity="0.7" Visibility="Collapsed"/>
         </Canvas>
 
         <!--The menu selection-->
-        <Button x:Name="Play" Grid.Column="3" Margin="5 0" Content="Play" Visibility="Collapsed"/>
+        <Button x:Name="Play" Grid.Column="3" Margin="5 0" Content="Play" Visibility="Collapsed" Click="Play_Click"/>
         
-        
+        <Button x:Name="GuessButton" Grid.Column="3" Margin="5 0" Content="Guess" Visibility="Collapsed" Click="GuessButton_Click"/>
+        <TextBox x:Name="GuessBox" Grid.ColumnSpan="3" Background="DarkSlateGray" Visibility="Collapsed" Foreground="WhiteSmoke" Margin="2"/>
+
         <!--Configuration menu: add coordinates (select how many points user is adding, ask coordinate name, and ask for click), reset specific points, clear map-->
         <Button x:Name="Configure" Grid.Column="1" Margin="5 0" Content="Configure" Click="Configure_Click" Visibility="Collapsed"/>
 
