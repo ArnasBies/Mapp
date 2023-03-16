@@ -282,6 +282,7 @@ namespace Mapp
         private void Play_Click(object sender, RoutedEventArgs e)
         {
             if (currentConfig == null || currentConfig.MapObjects == null || currentConfig.MapObjects.Count == 0) return;
+            AddResult("Your Guess || Answer");
             EnterPlayMode();
             inPlayMode = true;
 
@@ -291,16 +292,30 @@ namespace Mapp
             HighlightObject(currentPlayObject);
         }
 
+        private void GuessBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if(e.Key == Key.Enter)
+            {
+                GuessButton_Click(this, new RoutedEventArgs());
+            }
+        }
+
         private void GuessButton_Click(object sender, RoutedEventArgs e)
         {
             if (String.IsNullOrEmpty(GuessBox.Text.ToString())) return;
 
-            if (GuessBox.Text.ToString() == currentPlayObject.ObjectName.TrimEnd()) score++;
+            if (GuessBox.Text.ToLower() == currentPlayObject.ObjectName.TrimEnd().ToLower())
+            {
+                AddResult($"{GuessBox.Text} || {currentPlayObject.ObjectName} ✔");
+                score++;
+            }
+            else AddResult($"{GuessBox.Text} || {currentPlayObject.ObjectName} ❌");
 
             playModeObjects.Remove(currentPlayObject);
 
             if(playModeObjects.Count == 0)
             {
+                GuessBox.Clear();
                 ExitPlayMode();
                 return;
             }
@@ -335,12 +350,20 @@ namespace Mapp
                     sw.WriteLine($"{p.X / BackgroundArea.ActualWidth} {p.Y / BackgroundArea.ActualHeight} {tempObjectName}");
                 }
 
+                CurrentPointsListBox.Items.Clear();
                 ResetObjectBox();
 
                 AddPoint.Visibility = Visibility.Visible;
                 ToolTip.Text = "";
                 inAddingMode = false;
             }
+        }
+
+        private void CloseResult_Click(object sender, RoutedEventArgs e)
+        {
+            Result.Visibility = Visibility.Collapsed;
+            CloseResult.Visibility = Visibility.Collapsed;
+            ResultBox.Items.Clear();
         }
 
         private void SelectedObject(object sender, SelectionChangedEventArgs e)
@@ -392,17 +415,22 @@ namespace Mapp
             ShowMaps.Visibility = Visibility.Visible;
             ObjectHighlight.Visibility = Visibility.Collapsed;
 
-            ToolTip.Text = $"Your Score: {score}/{currentConfig.MapObjects.Count}";
+            AddResult($"Your Score: {score}/{currentConfig.MapObjects.Count}");
+            Result.Visibility = Visibility.Visible;
+            CloseResult.Visibility = Visibility.Visible;
 
             GuessBox.Visibility = Visibility.Collapsed;
             GuessButton.Visibility = Visibility.Collapsed;
             score = 0;
         }
 
+        private void AddResult(string line)
+        {
+            ResultBox.Items.Add(line);
+        }
+
         private void ResetObjectBox()
         {
-            CurrentPointsListBox.Items.Clear();
-
             foreach (MapObject p in currentConfig.MapObjects)
             {
                 CurrentPointsListBox.Items.Add(p.ObjectName);

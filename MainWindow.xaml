@@ -30,8 +30,13 @@
         <Button x:Name="Play" Grid.Column="3" Margin="5 0" Content="Play" Visibility="Collapsed" Click="Play_Click"/>
         
         <Button x:Name="GuessButton" Grid.Column="3" Margin="5 0" Content="Guess" Visibility="Collapsed" Click="GuessButton_Click"/>
-        <TextBox x:Name="GuessBox" Grid.ColumnSpan="3" Background="DarkSlateGray" Visibility="Collapsed" Foreground="WhiteSmoke" Margin="2"/>
+        <TextBox x:Name="GuessBox" Grid.ColumnSpan="3" Background="DarkSlateGray" Visibility="Collapsed" Foreground="WhiteSmoke" Margin="2" KeyDown="GuessBox_KeyDown"/>
 
+        <Button x:Name="CloseResult" Content="Close" Grid.ColumnSpan="2" Grid.Column="1" Grid.Row="1" VerticalAlignment="Top" Margin="60 40" Click="CloseResult_Click" Visibility="Collapsed"/>
+        <ScrollViewer x:Name="Result" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="1" Grid.RowSpan="2" Margin="60" Visibility="Collapsed">
+            <ListView x:Name="ResultBox" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="1" Grid.RowSpan="2" Background="DarkSlateGray" HorizontalContentAlignment="Center" Foreground="GhostWhite"/>
+        </ScrollViewer>
+            
         <!--Configuration menu: add coordinates (select how many points user is adding, ask coordinate name, and ask for click), reset specific points, clear map-->
         <Button x:Name="Configure" Grid.Column="1" Margin="5 0" Content="Configure" Click="Configure_Click" Visibility="Collapsed"/>
 
